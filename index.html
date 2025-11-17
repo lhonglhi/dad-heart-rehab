@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>心脏康复打卡助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            padding-bottom: 60px;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .nav-item.active {
+            color: #1890ff;
+            font-weight: bold;
+        }
+
+        .nav-item:active {
+            background: #f0f0f0;
+        }
+
+        /* 页面容器 */
+        .page {
+            display: none;
+            padding: 15px;
+            padding-bottom: 20px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        /* 阶段概览 */
+        .overview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .overview h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .overview-item {
+            margin: 8px 0;
+            font-size: 15px;
+        }
+
+        .overview-item strong {
+            font-size: 18px;
+        }
+
+        /* 头像和标题区域 */
+        .overview-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .dad-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 3px solid white;
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .overview-title-section {
+            flex: 1;
+        }
+
+        .overview-title-section h2 {
+            margin: 0 0 5px 0;
+        }
+
+        .overview-subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        /* 任务卡片 */
+        .task-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .task-option {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .task-option:active {
+            transform: scale(0.98);
+        }
+
+        .task-option.selected-yes {
+            background: #52c41a;
+            color: white;
+            border-color: #52c41a;
+        }
+
+        .task-option.selected-no {
+            background: #ff4d4f;
+            color: white;
+            border-color: #ff4d4f;
+        }
+
+        /* 输入框 */
+        input[type="number"], input[type="text"], input[type="date"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-top: 8px;
+        }
+
+        textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .input-group {
+            margin-top: 10px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .input-row input {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        /* 症状复选框 */
+        .checkbox-group {
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 5px;
+        }
+
+        /* 按钮 */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .btn:active {
+            background: #096dd9;
+        }
+
+        .btn-danger {
+            background: #ff4d4f;
+        }
+
+        .btn-danger:active {
+            background: #cf1322;
+        }
+
+        /* 提示文本 */
+        .hint-text {
+            background: #fff7e6;
+            border-left: 3px solid #faad14;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 记录列表 */
+        .record-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .record-date {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .record-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .record-tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .tag-success {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+
+        .tag-error {
+            background: #fff1f0;
+            color: #ff4d4f;
+            border: 1px solid #ffa39e;
+        }
+
+        .tag-info {
+            background: #e6f7ff;
+            color: #1890ff;
+            border: 1px solid #91d5ff;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1890ff;
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        /* 设置项 */
+        .setting-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .setting-label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        /* 弹出提示 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        .toast.show {
+            display: block;
+            animation: fadeInOut 2s;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+
+        /* 记录详情展开 */
+        .record-detail {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .record-detail.show {
+            display: block;
+        }
+
+        .record-detail-item {
+            margin: 5px 0;
+        }
+
+        /* 康复阶段进度条 */
+        .roadmap-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .roadmap-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .roadmap-progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            margin: 30px 0 20px 0;
+        }
+
+        .roadmap-line {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+
+        .roadmap-line-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #52c41a 0%, #1890ff 100%);
+            transition: width 0.5s ease;
+            border-radius: 2px;
+        }
+
+        .roadmap-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+
+        .roadmap-node {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+            margin-bottom: 8px;
+        }
+
+        .roadmap-stage.completed .roadmap-node {
+            background: #52c41a;
+            border-color: #52c41a;
+            color: white;
+        }
+
+        .roadmap-stage.current .roadmap-node {
+            background: #1890ff;
+            border-color: #1890ff;
+            color: white;
+            box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(24, 144, 255, 0.1);
+            }
+        }
+
+        .roadmap-stage.future .roadmap-node {
+            background: white;
+            border-color: #e0e0e0;
+            color: #999;
+        }
+
+        .roadmap-label {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .roadmap-stage.current .roadmap-label {
+            color: #1890ff;
+            font-weight: bold;
+        }
+
+        .roadmap-stage.completed .roadmap-label {
+            color: #52c41a;
+            font-weight: bold;
+        }
+
+        .roadmap-days {
+            font-size: 10px;
+            color: #999;
+            text-align: center;
+        }
+
+        .roadmap-overall {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .roadmap-overall-text {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .roadmap-percentage-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .roadmap-percentage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #52c41a 0%, #1890ff 50%, #722ed1 100%);
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        /* 血压心率提示 */
+        .bp-hr-guide {
+            background: #f0f5ff;
+            border: 1px solid #d6e4ff;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .bp-hr-guide-title {
+            font-weight: bold;
+            color: #1890ff;
+            margin-bottom: 5px;
+        }
+
+        .bp-hr-alert {
+            display: none;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .bp-hr-alert.show {
+            display: block;
+        }
+
+        .bp-hr-alert.normal {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+
+        .bp-hr-alert.warning {
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            color: #d48806;
+        }
+
+        .bp-hr-alert.danger {
+            background: #fff1f0;
+            border: 1px solid #ffa39e;
+            color: #cf1322;
+        }
+
+        .bp-hr-alert-icon {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .tag-warning {
+            background: #fffbe6;
+            color: #d48806;
+            border: 1px solid #ffe58f;
+        }
+
+        .tag-danger {
+            background: #fff1f0;
+            color: #cf1322;
+            border: 1px solid #ffa39e;
+        }
+
+        /* 吸烟喝酒风险警告 */
+        .risk-warning {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 6px;
+            background: #fff1f0;
+            border: 2px solid #ff4d4f;
+            animation: shakeWarning 0.5s;
+        }
+
+        .risk-warning.show {
+            display: block;
+        }
+
+        @keyframes shakeWarning {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .risk-warning-title {
+            font-weight: bold;
+            color: #cf1322;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .risk-warning-icon {
+            font-size: 20px;
+            margin-right: 5px;
+        }
+
+        .risk-warning-content {
+            font-size: 13px;
+            color: #8c0000;
+            line-height: 1.6;
+        }
+
+        .risk-warning-content strong {
+            color: #cf1322;
+            font-size: 14px;
+        }
+
+        .risk-stats {
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(207, 19, 34, 0.1);
+            border-radius: 4px;
+            font-size: 12px;
+            color: #8c0000;
+        }
+
+        /* 检查管理 */
+        .checkup-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #f9f9f9;
+            border-left: 4px solid #ddd;
+        }
+
+        .checkup-item.done {
+            background: #f6ffed;
+            border-left-color: #52c41a;
+        }
+
+        .checkup-item.overdue {
+            background: #fff1f0;
+            border-left-color: #ff4d4f;
+        }
+
+        .checkup-item.upcoming {
+            background: #fff7e6;
+            border-left-color: #faad14;
+        }
+
+        .checkup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .checkup-title {
+            font-weight: bold;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .checkup-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .checkup-status.done {
+            background: #52c41a;
+            color: white;
+        }
+
+        .checkup-status.pending {
+            background: #faad14;
+            color: white;
+        }
+
+        .checkup-status.overdue {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        .checkup-info {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .checkup-input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .checkup-input-group input {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .checkup-input-group button {
+            padding: 10px 20px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .checkup-input-group button:active {
+            background: #096dd9;
+        }
+
+        .checkup-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .checkup-result.good {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+
+        .checkup-result.warning {
+            background: #fff7e6;
+            border: 1px solid #ffe58f;
+            color: #d48806;
+        }
+
+        .checkup-result.danger {
+            background: #fff1f0;
+            border: 1px solid #ffa39e;
+            color: #cf1322;
+        }
+
+        .next-checkup-small {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #1890ff;
+        }
+
+        .next-checkup-small strong {
+            font-size: 15px;
+            color: #0050b3;
+        }
+
+        /* 强化模式警告 */
+        .intensified-warning {
+            background: linear-gradient(135deg, #fff1f0 0%, #ffccc7 100%);
+            border: 2px solid #ff4d4f;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(255, 77, 79, 0.2);
+        }
+
+        .intensified-warning-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #cf1322;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .intensified-warning-content {
+            font-size: 14px;
+            color: #8c8c8c;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .intensified-warning-actions {
+            font-size: 13px;
+            color: #595959;
+            line-height: 1.8;
+            padding-left: 16px;
+        }
+
+        .intensified-warning-actions div {
+            margin-bottom: 4px;
+        }
+
+        .intensified-warning-actions strong {
+            color: #cf1322;
+        }
+
+        /* 强化模式下的用药提醒 */
+        .task-meds.intensified {
+            background: #fff1f0;
+            border: 2px solid #ffa39e;
+        }
+
+        .task-meds.intensified .card-title {
+            color: #cf1322;
+            font-weight: bold;
+        }
+
+        .task-meds.intensified .card-title::before {
+            content: '⚠️ ';
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 提示框 -->
+    <div id="toast" class="toast"></div>
+
+    <!-- 今天页面 -->
+    <div id="page-today" class="page active">
+        <!-- 阶段概览 -->
+        <div class="overview" id="overview">
+            <div class="overview-header">
+                <img class="dad-avatar" src="kaiqun-image.jpg" alt="爸爸">
+                <div class="overview-title-section">
+                    <h2>老爸心脏康复计划</h2>
+                    <div class="overview-subtitle">用心守护，健康常伴 ❤️</div>
+                </div>
+            </div>
+            <div class="overview-item">距离手术：第 <strong id="days-since-surgery">--</strong> 天</div>
+            <div class="overview-item">当前阶段：<strong id="current-phase">--</strong></div>
+            <div class="overview-item">连续无烟：<strong id="streak-smoke">--</strong> 天</div>
+            <div class="overview-item">连续无酒：<strong id="streak-drink">--</strong> 天</div>
+        </div>
+
+        <!-- 康复阶段路线图 -->
+        <div class="roadmap-container" id="roadmap-container">
+            <div class="roadmap-title">康复阶段路线图</div>
+            <div class="roadmap-progress">
+                <div class="roadmap-line">
+                    <div class="roadmap-line-progress" id="roadmap-line-progress"></div>
+                </div>
+
+                <div class="roadmap-stage" id="stage-protection">
+                    <div class="roadmap-node">🛡️</div>
+                    <div class="roadmap-label">保护期</div>
+                    <div class="roadmap-days">0-13天</div>
+                </div>
+
+                <div class="roadmap-stage" id="stage-recovery">
+                    <div class="roadmap-node">💪</div>
+                    <div class="roadmap-label">恢复期</div>
+                    <div class="roadmap-days">14-55天</div>
+                </div>
+
+                <div class="roadmap-stage" id="stage-strengthening">
+                    <div class="roadmap-node">❤️</div>
+                    <div class="roadmap-label">强心期</div>
+                    <div class="roadmap-days">56-180天</div>
+                </div>
+
+                <div class="roadmap-stage" id="stage-maintenance">
+                    <div class="roadmap-node">🌟</div>
+                    <div class="roadmap-label">维护期</div>
+                    <div class="roadmap-days">180天+</div>
+                </div>
+            </div>
+
+            <div class="roadmap-overall">
+                <div class="roadmap-overall-text">
+                    <span>整体康复进度</span>
+                    <span id="roadmap-percentage">0%</span>
+                </div>
+                <div class="roadmap-percentage-bar">
+                    <div class="roadmap-percentage-fill" id="roadmap-percentage-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 阶段提示 -->
+        <div class="hint-text" id="phase-hint">
+            请先在「设置」中填写手术日期。
+        </div>
+
+        <!-- 强化模式警告 -->
+        <div class="intensified-warning" id="intensified-warning" style="display: none;">
+            <div class="intensified-warning-title">
+                🚨 强化管理模式已启动
+            </div>
+            <div class="intensified-warning-content">
+                检查指标未达标，系统已自动调整为强化管理模式，确保康复安全。
+            </div>
+            <div class="intensified-warning-actions">
+                <div>• <strong>运动目标</strong>已适当下调（30分钟）</div>
+                <div>• <strong>用药提醒</strong>已加强（红色高亮）</div>
+                <div>• <strong>检查监测</strong>需更密切关注</div>
+                <div>• 请遵医嘱调整治疗方案</div>
+            </div>
+        </div>
+
+        <!-- 下一个检查提示（小卡片） -->
+        <div class="next-checkup-small" id="next-checkup-today" style="display: none;">
+            <div id="next-checkup-today-content"></div>
+        </div>
+
+        <!-- 戒烟卡片 -->
+        <div class="card">
+            <div class="card-title">今天有抽烟吗？</div>
+            <div class="task-options">
+                <div class="task-option" data-task="smoke" data-value="false">没抽 ✅</div>
+                <div class="task-option" data-task="smoke" data-value="true">抽了 ❌</div>
+            </div>
+            <!-- 吸烟风险警告 -->
+            <div class="risk-warning" id="smoke-risk-warning">
+                <div class="risk-warning-title">
+                    <span class="risk-warning-icon">⚠️</span>
+                    心梗术后吸烟的严重后果
+                </div>
+                <div class="risk-warning-content">
+                    • <strong>再次心梗风险增加 2-3 倍</strong><br>
+                    • 支架内血栓形成风险显著升高<br>
+                    • 严重降低心脏康复效果，可能抵消手术治疗<br>
+                    • 增加猝死风险，危及生命安全<br>
+                    <div class="risk-stats" id="smoke-stats"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 戒酒卡片 -->
+        <div class="card">
+            <div class="card-title">今天有喝酒吗？</div>
+            <div class="task-options">
+                <div class="task-option" data-task="drink" data-value="false">没喝 ✅</div>
+                <div class="task-option" data-task="drink" data-value="true">喝了 ❌</div>
+            </div>
+            <!-- 饮酒风险警告 -->
+            <div class="risk-warning" id="drink-risk-warning">
+                <div class="risk-warning-title">
+                    <span class="risk-warning-icon">⚠️</span>
+                    心梗术后饮酒的严重后果
+                </div>
+                <div class="risk-warning-content">
+                    • <strong>再次心梗和猝死风险增加</strong><br>
+                    • 可能与心脏药物产生危险的相互作用<br>
+                    • 升高血压，增加心脏负担<br>
+                    • 影响心肌恢复，降低康复效果<br>
+                    <div class="risk-stats" id="drink-stats"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 吃药卡片 -->
+        <div class="card" id="meds-card">
+            <div class="card-title">今天按时吃药了吗？</div>
+            <div class="task-options">
+                <div class="task-option" data-task="meds" data-value="true">已按时吃完 ✅</div>
+                <div class="task-option" data-task="meds" data-value="false">没完全按时 ❌</div>
+            </div>
+        </div>
+
+        <!-- 运动卡片 -->
+        <div class="card">
+            <div class="card-title">今天运动 / 走路</div>
+            <div style="color: #666; font-size: 14px; margin-bottom: 10px;">
+                今日建议：<strong id="exercise-target">--</strong> 分钟
+            </div>
+            <div class="input-group">
+                <label class="input-label">实际完成（分钟）</label>
+                <input type="number" id="exercise-minutes" placeholder="输入运动分钟数" min="0">
+            </div>
+        </div>
+
+        <!-- 血压/心率卡片 -->
+        <div class="card">
+            <div class="card-title">今天血压 / 心率</div>
+            <div class="input-row">
+                <input type="number" id="bp-sys" placeholder="收缩压" min="0" onchange="checkVitalSigns()">
+                <input type="number" id="bp-dia" placeholder="舒张压" min="0" onchange="checkVitalSigns()">
+                <input type="number" id="heart-rate" placeholder="心率" min="0" onchange="checkVitalSigns()">
+            </div>
+
+            <!-- 正常范围指南 -->
+            <div class="bp-hr-guide">
+                <div class="bp-hr-guide-title">📊 参考范围</div>
+                <div>• 收缩压：90-140 mmHg</div>
+                <div>• 舒张压：60-90 mmHg</div>
+                <div>• 心率：60-100 次/分</div>
+            </div>
+
+            <!-- 实时检测提示 -->
+            <div class="bp-hr-alert" id="bp-hr-alert"></div>
+        </div>
+
+        <!-- 症状/备注卡片 -->
+        <div class="card">
+            <div class="card-title">症状 / 备注（可选）</div>
+            <div class="checkbox-group">
+                <label class="checkbox-item">
+                    <input type="checkbox" name="symptom" value="胸痛"> 胸痛
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="symptom" value="胸闷"> 胸闷
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="symptom" value="心悸"> 心悸
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="symptom" value="气短"> 气短
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="symptom" value="下肢水肿"> 下肢水肿
+                </label>
+            </div>
+            <textarea id="note" placeholder="其他备注..."></textarea>
+        </div>
+
+        <!-- 保存按钮 -->
+        <button class="btn" onclick="saveTodayRecord()">保存今天的记录</button>
+    </div>
+
+    <!-- 记录页面 -->
+    <div id="page-records" class="page">
+        <!-- 统计概览 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">连续无烟</div>
+                <div class="stat-value" id="stat-smoke-current">0</div>
+                <div class="stat-label">天（最长: <span id="stat-smoke-max">0</span>天）</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">连续无酒</div>
+                <div class="stat-value" id="stat-drink-current">0</div>
+                <div class="stat-label">天（最长: <span id="stat-drink-max">0</span>天）</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">7天平均运动</div>
+            <div style="font-size: 24px; font-weight: bold; color: #1890ff; text-align: center; padding: 10px 0;">
+                <span id="stat-avg-exercise">0</span> 分钟/天
+            </div>
+        </div>
+
+        <!-- 吸烟喝酒统计警告 -->
+        <div class="card" id="risky-behavior-stats" style="display: none;">
+            <div class="card-title" style="color: #cf1322;">⚠️ 危险行为记录</div>
+            <div style="padding: 10px; background: #fff1f0; border-radius: 6px; border: 1px solid #ffa39e;">
+                <div style="margin-bottom: 10px;">
+                    <strong style="color: #cf1322;">术后吸烟次数：</strong>
+                    <span id="stat-smoke-total" style="font-size: 20px; font-weight: bold; color: #cf1322;">0</span> 次
+                    <span id="stat-smoke-recent" style="font-size: 14px; color: #8c0000; margin-left: 10px;"></span>
+                </div>
+                <div>
+                    <strong style="color: #cf1322;">术后饮酒次数：</strong>
+                    <span id="stat-drink-total" style="font-size: 20px; font-weight: bold; color: #cf1322;">0</span> 次
+                    <span id="stat-drink-recent" style="font-size: 14px; color: #8c0000; margin-left: 10px;"></span>
+                </div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffa39e; font-size: 13px; color: #8c0000;">
+                    每次吸烟或饮酒都在增加再次心梗和猝死的风险！为了生命安全，请立即彻底戒除！
+                </div>
+            </div>
+        </div>
+
+        <!-- 记录列表 -->
+        <div id="records-list">
+            <div class="empty-state">
+                <div class="empty-state-icon">📝</div>
+                <div>还没有记录</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置页面 -->
+    <div id="page-settings" class="page">
+        <div class="setting-item">
+            <div class="setting-label">手术日期（必填）</div>
+            <input type="date" id="surgery-date">
+        </div>
+
+        <div class="setting-item">
+            <div class="setting-label">运动目标设置</div>
+            <div class="task-options" style="margin-top: 10px;">
+                <div class="task-option" data-task="exercise-mode" data-value="auto">按系统推荐</div>
+                <div class="task-option" data-task="exercise-mode" data-value="custom">自定义目标</div>
+            </div>
+            <div id="custom-exercise-input" style="display: none; margin-top: 10px;">
+                <label class="input-label">每日目标（分钟）</label>
+                <input type="number" id="custom-exercise-target" placeholder="输入分钟数" min="0">
+            </div>
+        </div>
+
+        <button class="btn" onclick="saveSettings()">保存设置</button>
+
+        <div class="setting-item" style="margin-top: 20px;">
+            <div class="setting-label">数据管理</div>
+            <button class="btn" onclick="exportData()">导出数据（JSON）</button>
+            <button class="btn btn-danger" onclick="clearAllData()" style="margin-top: 10px;">清空所有记录</button>
+        </div>
+    </div>
+
+    <!-- 检查页面 -->
+    <div id="page-checkups" class="page">
+        <!-- 下一个检查提醒 -->
+        <div class="card" id="next-checkup-card" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="card-title" style="color: white;">🩺 下一个检查</div>
+            <div id="next-checkup-info" style="font-size: 16px; margin-top: 10px;"></div>
+        </div>
+
+        <!-- 检查清单 -->
+        <div class="card">
+            <div class="card-title">检查计划清单</div>
+            <div id="checkup-list"></div>
+        </div>
+
+        <!-- 检查说明 -->
+        <div class="card">
+            <div class="card-title">📖 检查项目说明</div>
+            <div style="line-height: 1.8; font-size: 14px;">
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #1890ff;">✔ 血脂（LDL）检查</strong><br>
+                    • 最重要的检查，决定是否再堵、是否二次心梗<br>
+                    • 必须压到 <strong style="color: #cf1322;">1.4 mmol/L 以下</strong><br>
+                    • 术后需要多次复查确保达标
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #1890ff;">✔ 心脏彩超（EF 射血分数）</strong><br>
+                    • EF = 心脏泵血能力<br>
+                    • <strong style="color: #52c41a;">EF > 50%</strong>：正常<br>
+                    • <strong style="color: #faad14;">EF 40-50%</strong>：需要注意<br>
+                    • <strong style="color: #cf1322;">EF < 40%</strong>：高风险，需严格管理
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #1890ff;">✔ 心电图（ECG）</strong><br>
+                    • 检查心律问题<br>
+                    • 有些心律失常会导致猝死风险增加
+                </div>
+                <div>
+                    <strong style="color: #1890ff;">✔ 肝功能</strong><br>
+                    • 因为服用他汀类药物必须监测肝脏功能
+                </div>
+            </div>
+        </div>
+
+        <!-- 未达标说明 -->
+        <div class="card" style="background: linear-gradient(135deg, #fff1f0 0%, #ffe7e3 100%); border: 2px solid #ffa39e;">
+            <div class="card-title" style="color: #cf1322;">⚠️ 指标未达标后果说明</div>
+            <div style="line-height: 1.8; font-size: 14px; color: #595959;">
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #cf1322;">系统会自动启动强化管理模式</strong>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <strong>触发条件：</strong><br>
+                    • 恢复期检查 LDL ≥ 1.8 mmol/L（严重未达标）<br>
+                    • 或 EF < 40%（心功能不全）
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <strong>强化模式调整：</strong><br>
+                    • 🏃 运动目标下调至 30 分钟（更保守）<br>
+                    • 💊 用药提醒加强（红色高亮）<br>
+                    • 📊 需要更密切监测各项指标<br>
+                    • 🩺 可能需要增加复查频率
+                </div>
+                <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #ffa39e;">
+                    <strong style="color: #cf1322;">⚠️ 重要提示：</strong><br>
+                    如果进入强化模式，请务必：<br>
+                    1. 尽快咨询主治医生，调整治疗方案<br>
+                    2. 严格按医嘱服药，不可自行减量或停药<br>
+                    3. 密切关注症状变化<br>
+                    4. 考虑增加复查频率
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchPage('today')">今天</div>
+        <div class="nav-item" onclick="switchPage('records')">记录</div>
+        <div class="nav-item" onclick="switchPage('checkups')">检查</div>
+        <div class="nav-item" onclick="switchPage('settings')">设置</div>
+    </div>
+
+    <script>
+        // ==================== 全局变量 ====================
+        const STORAGE_KEYS = {
+            RECORDS: 'heartRehabRecords',
+            SETTINGS: 'heartRehabSettings',
+            CHECKUPS: 'heartRehabCheckups'
+        };
+
+        let currentPage = 'today';
+        let todayData = {};
+
+        // ==================== 页面切换 ====================
+        function switchPage(page) {
+            currentPage = page;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            document.getElementById(`page-${page}`).classList.add('active');
+            event.target.classList.add('active');
+
+            if (page === 'today') {
+                loadTodayPage();
+            } else if (page === 'records') {
+                loadRecordsPage();
+            } else if (page === 'checkups') {
+                loadCheckupsPage();
+            } else if (page === 'settings') {
+                loadSettingsPage();
+            }
+        }
+
+        // ==================== 阶段计算 ====================
+        function calculatePhase(surgeryDate) {
+            if (!surgeryDate) return null;
+
+            const surgery = new Date(surgeryDate);
+            const today = new Date();
+            const days = Math.floor((today - surgery) / (1000 * 60 * 60 * 24));
+
+            let phase, phaseName, hint, target, intensified = false;
+
+            if (days < 0) {
+                return { days: 0, phase: 'pre', phaseName: '未开始', hint: '手术日期设置有误', target: 0, intensified: false };
+            } else if (days <= 13) {
+                phase = 'protection';
+                phaseName = '保护期';
+                hint = '现在是术后保护期，重点是轻微活动 + 休息，不要用力，不要快走。如果出现胸痛、明显气喘、出冷汗，请立刻停止并就医。';
+                target = 15;
+            } else if (days <= 55) {
+                phase = 'recovery';
+                phaseName = '恢复期';
+                hint = '现在是恢复期，目标是每天坚持走路，逐步增加时间，但不要勉强。';
+
+                if (days <= 20) target = 20;
+                else if (days <= 27) target = 25;
+                else if (days <= 41) target = 30;
+                else target = 35;
+            } else if (days <= 180) {
+                phase = 'strengthening';
+                phaseName = '强心期';
+
+                // 检查恢复期的检查指标是否达标
+                const checkups = getCheckups();
+                const needsIntensified = checkIfNeedsIntensification(checkups);
+
+                if (needsIntensified) {
+                    intensified = true;
+                    phaseName = '强心期（强化版）';
+                    hint = '⚠️ 检查指标未达标，启动强化管理模式：运动适当下调、加强用药、密切监测。请遵医嘱调整治疗方案。';
+                    target = 30; // 强化模式下运动目标下调
+                } else {
+                    hint = '现在是强心期，持续的运动可以让心脏越来越稳定。';
+                    target = 40;
+                }
+            } else {
+                phase = 'maintenance';
+                phaseName = '长期维护期';
+                hint = '继续保持良好的习惯，这是长期健康的关键。';
+                target = 40;
+            }
+
+            return { days, phase, phaseName, hint, target, intensified };
+        }
+
+        // ==================== 检查是否需要强化模式 ====================
+        function checkIfNeedsIntensification(checkups) {
+            if (!checkups) return false;
+
+            let hasFailedCheck = false;
+
+            // 检查血脂检查1（应在恢复期完成）
+            if (checkups.firstLipid && checkups.firstLipid.done) {
+                const ldl = checkups.firstLipid.LDL;
+                if (ldl && ldl >= 1.8) {
+                    hasFailedCheck = true;
+                }
+            }
+
+            // 检查心电图+彩超（应在恢复期或强心期初期完成）
+            if (checkups.echoECG && checkups.echoECG.done) {
+                const ef = checkups.echoECG.EF;
+                if (ef && ef < 40) {
+                    hasFailedCheck = true;
+                }
+            }
+
+            return hasFailedCheck;
+        }
+
+        // ==================== 计算连续天数 ====================
+        function calculateStreak(records, checkField) {
+            if (!records || records.length === 0) return { current: 0, max: 0 };
+
+            const sortedRecords = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            let currentStreak = 0;
+            let maxStreak = 0;
+            let tempStreak = 0;
+
+            const today = new Date().toISOString().split('T')[0];
+            let checkDate = new Date(today);
+
+            for (const record of sortedRecords) {
+                const recordDate = record.date;
+                const expectedDate = checkDate.toISOString().split('T')[0];
+
+                if (recordDate === expectedDate) {
+                    if (record[checkField] === false) {
+                        tempStreak++;
+                        if (recordDate === today || (new Date(today) - new Date(recordDate)) / (1000 * 60 * 60 * 24) < 1) {
+                            currentStreak = tempStreak;
+                        }
+                    } else {
+                        if (currentStreak === 0) currentStreak = 0;
+                        tempStreak = 0;
+                    }
+                    maxStreak = Math.max(maxStreak, tempStreak);
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+
+            return { current: currentStreak, max: maxStreak };
+        }
+
+        // ==================== 加载今天页面 ====================
+        function loadTodayPage() {
+            const settings = getSettings();
+            const phaseInfo = calculatePhase(settings.surgeryDate);
+
+            if (!phaseInfo) {
+                document.getElementById('days-since-surgery').textContent = '--';
+                document.getElementById('current-phase').textContent = '--';
+                document.getElementById('streak-smoke').textContent = '--';
+                document.getElementById('streak-drink').textContent = '--';
+                document.getElementById('phase-hint').textContent = '请先在「设置」中填写手术日期。';
+                document.getElementById('exercise-target').textContent = '--';
+                // 隐藏路线图
+                document.getElementById('roadmap-container').style.display = 'none';
+                return;
+            }
+
+            // 显示路线图
+            document.getElementById('roadmap-container').style.display = 'block';
+
+            const records = getRecords();
+            const smokeStreak = calculateStreak(records, 'smoked');
+            const drinkStreak = calculateStreak(records, 'drank');
+
+            document.getElementById('days-since-surgery').textContent = phaseInfo.days;
+            document.getElementById('current-phase').textContent = phaseInfo.phaseName;
+            document.getElementById('streak-smoke').textContent = smokeStreak.current;
+            document.getElementById('streak-drink').textContent = drinkStreak.current;
+            document.getElementById('phase-hint').textContent = phaseInfo.hint;
+
+            const exerciseTarget = settings.exerciseMode === 'custom' ?
+                (settings.customExerciseTarget || phaseInfo.target) : phaseInfo.target;
+            document.getElementById('exercise-target').textContent = exerciseTarget;
+
+            // 更新康复阶段路线图
+            updateRoadmap(phaseInfo);
+
+            // 加载今天的已保存数据
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecord = records.find(r => r.date === today);
+
+            if (todayRecord) {
+                loadTodayRecord(todayRecord);
+            } else {
+                clearTodayForm();
+            }
+
+            // 显示/隐藏强化模式警告
+            const intensifiedWarning = document.getElementById('intensified-warning');
+            const medsCard = document.getElementById('meds-card');
+
+            if (phaseInfo.intensified) {
+                intensifiedWarning.style.display = 'block';
+                medsCard.classList.add('intensified');
+            } else {
+                intensifiedWarning.style.display = 'none';
+                medsCard.classList.remove('intensified');
+            }
+
+            // 显示下一个检查提示
+            showNextCheckupInToday();
+        }
+
+        // ==================== 更新康复阶段路线图 ====================
+        function updateRoadmap(phaseInfo) {
+            const { days, phase } = phaseInfo;
+
+            // 重置所有阶段状态
+            const stages = ['protection', 'recovery', 'strengthening', 'maintenance'];
+            stages.forEach(stageName => {
+                const stageElement = document.getElementById(`stage-${stageName}`);
+                stageElement.classList.remove('completed', 'current', 'future');
+            });
+
+            // 阶段映射到索引
+            const phaseMap = {
+                'protection': 0,
+                'recovery': 1,
+                'strengthening': 2,
+                'maintenance': 3
+            };
+
+            const currentPhaseIndex = phaseMap[phase] || 0;
+
+            // 设置每个阶段的状态
+            stages.forEach((stageName, index) => {
+                const stageElement = document.getElementById(`stage-${stageName}`);
+                if (index < currentPhaseIndex) {
+                    stageElement.classList.add('completed');
+                } else if (index === currentPhaseIndex) {
+                    stageElement.classList.add('current');
+                } else {
+                    stageElement.classList.add('future');
+                }
+            });
+
+            // 计算连接线的进度
+            let lineProgressPercentage = 0;
+
+            if (days <= 13) {
+                // 保护期 (0-13天)
+                lineProgressPercentage = (days / 13) * (100 / 3) * 0.33;
+            } else if (days <= 55) {
+                // 恢复期 (14-55天)
+                const recoveryProgress = (days - 14) / (55 - 14);
+                lineProgressPercentage = 33.33 + (recoveryProgress * 33.33);
+            } else if (days <= 180) {
+                // 强心期 (56-180天)
+                const strengtheningProgress = (days - 56) / (180 - 56);
+                lineProgressPercentage = 66.66 + (strengtheningProgress * 33.33);
+            } else {
+                // 维护期 (180天+)
+                lineProgressPercentage = 100;
+            }
+
+            document.getElementById('roadmap-line-progress').style.width = lineProgressPercentage + '%';
+
+            // 计算整体康复进度（以180天为完整周期）
+            const overallPercentage = Math.min(Math.round((days / 180) * 100), 100);
+            document.getElementById('roadmap-percentage').textContent = overallPercentage + '%';
+            document.getElementById('roadmap-percentage-fill').style.width = overallPercentage + '%';
+        }
+
+        // ==================== 加载今天已保存的记录 ====================
+        function loadTodayRecord(record) {
+            // 戒烟
+            selectOption('smoke', String(record.smoked));
+            // 戒酒
+            selectOption('drink', String(record.drank));
+            // 吃药
+            selectOption('meds', String(record.medsTaken));
+            // 运动
+            document.getElementById('exercise-minutes').value = record.exerciseMinutes || '';
+            // 血压心率
+            document.getElementById('bp-sys').value = record.bpSys || '';
+            document.getElementById('bp-dia').value = record.bpDia || '';
+            document.getElementById('heart-rate').value = record.heartRate || '';
+            // 症状
+            document.querySelectorAll('input[name="symptom"]').forEach(cb => {
+                cb.checked = record.symptoms && record.symptoms.includes(cb.value);
+            });
+            // 备注
+            document.getElementById('note').value = record.note || '';
+
+            // 触发血压心率检查
+            checkVitalSigns();
+        }
+
+        // ==================== 清空今天表单 ====================
+        function clearTodayForm() {
+            document.querySelectorAll('.task-option').forEach(opt => {
+                opt.classList.remove('selected-yes', 'selected-no');
+            });
+            document.getElementById('exercise-minutes').value = '';
+            document.getElementById('bp-sys').value = '';
+            document.getElementById('bp-dia').value = '';
+            document.getElementById('heart-rate').value = '';
+            document.querySelectorAll('input[name="symptom"]').forEach(cb => cb.checked = false);
+            document.getElementById('note').value = '';
+            todayData = {};
+
+            // 清除血压心率提示
+            const alertBox = document.getElementById('bp-hr-alert');
+            if (alertBox) {
+                alertBox.classList.remove('show', 'normal', 'warning', 'danger');
+            }
+        }
+
+        // ==================== 选项选择辅助函数 ====================
+        function selectOption(task, value) {
+            const options = document.querySelectorAll(`[data-task="${task}"]`);
+            options.forEach(opt => {
+                opt.classList.remove('selected-yes', 'selected-no');
+                if (opt.dataset.value === value) {
+                    if (task === 'smoke' || task === 'drink') {
+                        opt.classList.add(value === 'false' ? 'selected-yes' : 'selected-no');
+                    } else if (task === 'meds') {
+                        opt.classList.add(value === 'true' ? 'selected-yes' : 'selected-no');
+                    } else {
+                        opt.classList.add('selected-yes');
+                    }
+                }
+            });
+        }
+
+        // ==================== 检查血压心率是否正常 ====================
+        function checkVitalSigns() {
+            const bpSys = parseInt(document.getElementById('bp-sys').value);
+            const bpDia = parseInt(document.getElementById('bp-dia').value);
+            const heartRate = parseInt(document.getElementById('heart-rate').value);
+
+            const alertBox = document.getElementById('bp-hr-alert');
+
+            // 如果没有输入任何值，隐藏提示
+            if (!bpSys && !bpDia && !heartRate) {
+                alertBox.classList.remove('show');
+                return null;
+            }
+
+            let issues = [];
+            let level = 'normal'; // normal, warning, danger
+
+            // 检查收缩压
+            if (bpSys) {
+                if (bpSys < 90) {
+                    issues.push('收缩压偏低');
+                    level = 'warning';
+                } else if (bpSys > 180) {
+                    issues.push('收缩压过高');
+                    level = 'danger';
+                } else if (bpSys > 140) {
+                    issues.push('收缩压偏高');
+                    if (level !== 'danger') level = 'warning';
+                }
+            }
+
+            // 检查舒张压
+            if (bpDia) {
+                if (bpDia < 60) {
+                    issues.push('舒张压偏低');
+                    if (level !== 'danger') level = 'warning';
+                } else if (bpDia > 110) {
+                    issues.push('舒张压过高');
+                    level = 'danger';
+                } else if (bpDia > 90) {
+                    issues.push('舒张压偏高');
+                    if (level !== 'danger') level = 'warning';
+                }
+            }
+
+            // 检查心率
+            if (heartRate) {
+                if (heartRate < 50) {
+                    issues.push('心率过慢');
+                    level = 'danger';
+                } else if (heartRate < 60) {
+                    issues.push('心率偏慢');
+                    if (level !== 'danger') level = 'warning';
+                } else if (heartRate > 120) {
+                    issues.push('心率过快');
+                    level = 'danger';
+                } else if (heartRate > 100) {
+                    issues.push('心率偏快');
+                    if (level !== 'danger') level = 'warning';
+                }
+            }
+
+            // 显示检测结果
+            alertBox.classList.remove('normal', 'warning', 'danger');
+
+            if (issues.length === 0) {
+                alertBox.classList.add('show', 'normal');
+                alertBox.innerHTML = '<span class="bp-hr-alert-icon">✅</span> 数值在正常范围内';
+            } else if (level === 'warning') {
+                alertBox.classList.add('show', 'warning');
+                let advice = '建议：继续观察，如持续异常或伴有不适症状，请咨询医生。';
+                alertBox.innerHTML = `<span class="bp-hr-alert-icon">⚠️</span> ${issues.join('、')}<br>${advice}`;
+            } else if (level === 'danger') {
+                alertBox.classList.add('show', 'danger');
+                let advice = '⚠️ 重要提示：数值明显异常，请尽快联系医生或就医，特别是伴有胸痛、气短、头晕等症状时。';
+                alertBox.innerHTML = `<span class="bp-hr-alert-icon">🚨</span> ${issues.join('、')}<br>${advice}`;
+            }
+
+            return { issues, level };
+        }
+
+        // ==================== 评估血压心率状态（用于记录保存） ====================
+        function assessVitalSigns(bpSys, bpDia, heartRate) {
+            if (!bpSys && !bpDia && !heartRate) return null;
+
+            let issues = [];
+            let level = 'normal';
+
+            if (bpSys) {
+                if (bpSys < 90 || bpSys > 140) {
+                    if (bpSys < 90 || bpSys > 180) level = 'danger';
+                    else if (level !== 'danger') level = 'warning';
+                }
+            }
+
+            if (bpDia) {
+                if (bpDia < 60 || bpDia > 90) {
+                    if (bpDia < 60 || bpDia > 110) level = 'danger';
+                    else if (level !== 'danger') level = 'warning';
+                }
+            }
+
+            if (heartRate) {
+                if (heartRate < 60 || heartRate > 100) {
+                    if (heartRate < 50 || heartRate > 120) level = 'danger';
+                    else if (level !== 'danger') level = 'warning';
+                }
+            }
+
+            return level;
+        }
+
+        // ==================== 保存今天的记录 ====================
+        function saveTodayRecord() {
+            const settings = getSettings();
+            if (!settings.surgeryDate) {
+                showToast('请先在「设置」中填写手术日期');
+                return;
+            }
+
+            const phaseInfo = calculatePhase(settings.surgeryDate);
+            const today = new Date().toISOString().split('T')[0];
+
+            // 收集数据
+            const smoked = todayData.smoke;
+            const drank = todayData.drink;
+            const medsTaken = todayData.meds;
+
+            if (smoked === undefined || drank === undefined || medsTaken === undefined) {
+                showToast('请完成戒烟、戒酒和吃药的打卡');
+                return;
+            }
+
+            const exerciseMinutes = parseInt(document.getElementById('exercise-minutes').value) || 0;
+            const bpSys = parseInt(document.getElementById('bp-sys').value) || null;
+            const bpDia = parseInt(document.getElementById('bp-dia').value) || null;
+            const heartRate = parseInt(document.getElementById('heart-rate').value) || null;
+
+            const symptoms = [];
+            document.querySelectorAll('input[name="symptom"]:checked').forEach(cb => {
+                symptoms.push(cb.value);
+            });
+
+            const note = document.getElementById('note').value.trim();
+
+            const exerciseTarget = settings.exerciseMode === 'custom' ?
+                (settings.customExerciseTarget || phaseInfo.target) : phaseInfo.target;
+
+            // 评估血压心率状态
+            const vitalSignsLevel = assessVitalSigns(bpSys, bpDia, heartRate);
+
+            const record = {
+                date: today,
+                phase: phaseInfo.phase,
+                smoked,
+                drank,
+                medsTaken,
+                exerciseMinutes,
+                exerciseTarget,
+                bpSys,
+                bpDia,
+                heartRate,
+                vitalSignsLevel, // 保存血压心率评估状态
+                symptoms,
+                note
+            };
+
+            // 保存记录
+            const records = getRecords();
+            const existingIndex = records.findIndex(r => r.date === today);
+
+            if (existingIndex >= 0) {
+                records[existingIndex] = record;
+            } else {
+                records.push(record);
+            }
+
+            saveRecords(records);
+
+            // 显示鼓励话或警告
+            const encouragements = [
+                '太棒了！今天又完成了一天的目标！',
+                '坚持就是胜利！爸爸加油！',
+                '每一天的努力都在让心脏更强壮！',
+                '记录已保存！继续保持好习惯！',
+                '做得好！健康的生活方式正在养成！'
+            ];
+
+            let message = encouragements[Math.floor(Math.random() * encouragements.length)];
+
+            // 优先级：吸烟/喝酒 > 血压心率危险 > 症状警告 > 血压心率警告 > 正常鼓励
+            if (smoked && drank) {
+                message = '🚨🚨🚨 警告！吸烟+饮酒会导致心梗复发风险急剧增加，严重危及生命！请立即停止！';
+            } else if (smoked) {
+                message = '🚨 严重警告！心梗术后吸烟会使再次心梗风险增加2-3倍，随时可能猝死！请立即戒烟！';
+            } else if (drank) {
+                message = '🚨 严重警告！心梗术后饮酒会增加猝死风险，并可能与心脏药物产生危险反应！请立即戒酒！';
+            } else if (vitalSignsLevel === 'danger') {
+                message = '🚨 记录已保存。血压/心率数值明显异常，请尽快联系医生或就医！';
+            } else if (symptoms.includes('胸痛') || symptoms.includes('气短')) {
+                message = '⚠️ 记录已保存。出现胸痛/气短等症状，请尽快就医！';
+            } else if (vitalSignsLevel === 'warning') {
+                message = '⚠️ 记录已保存。血压/心率略有异常，请继续观察，如持续异常请咨询医生。';
+            }
+
+            showToast(message);
+            loadTodayPage();
+        }
+
+        // ==================== 加载记录页面 ====================
+        function loadRecordsPage() {
+            const records = getRecords();
+
+            if (records.length === 0) {
+                document.getElementById('records-list').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div>还没有记录</div>
+                    </div>
+                `;
+                document.getElementById('stat-smoke-current').textContent = '0';
+                document.getElementById('stat-smoke-max').textContent = '0';
+                document.getElementById('stat-drink-current').textContent = '0';
+                document.getElementById('stat-drink-max').textContent = '0';
+                document.getElementById('stat-avg-exercise').textContent = '0';
+                return;
+            }
+
+            // 统计数据
+            const smokeStreak = calculateStreak(records, 'smoked');
+            const drinkStreak = calculateStreak(records, 'drank');
+
+            document.getElementById('stat-smoke-current').textContent = smokeStreak.current;
+            document.getElementById('stat-smoke-max').textContent = smokeStreak.max;
+            document.getElementById('stat-drink-current').textContent = drinkStreak.current;
+            document.getElementById('stat-drink-max').textContent = drinkStreak.max;
+
+            // 计算7天平均运动
+            const sortedRecords = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const last7Records = sortedRecords.slice(0, 7);
+            const avgExercise = last7Records.length > 0 ?
+                Math.round(last7Records.reduce((sum, r) => sum + (r.exerciseMinutes || 0), 0) / last7Records.length) : 0;
+            document.getElementById('stat-avg-exercise').textContent = avgExercise;
+
+            // 计算吸烟喝酒次数
+            const totalSmoked = records.filter(r => r.smoked === true).length;
+            const totalDrank = records.filter(r => r.drank === true).length;
+            const last30DaysSmoked = records.filter(r => {
+                const recordDate = new Date(r.date);
+                const today = new Date();
+                const daysDiff = Math.floor((today - recordDate) / (1000 * 60 * 60 * 24));
+                return daysDiff <= 30 && r.smoked === true;
+            }).length;
+            const last30DaysDrank = records.filter(r => {
+                const recordDate = new Date(r.date);
+                const today = new Date();
+                const daysDiff = Math.floor((today - recordDate) / (1000 * 60 * 60 * 24));
+                return daysDiff <= 30 && r.drank === true;
+            }).length;
+
+            // 显示/隐藏危险行为统计卡片
+            if (totalSmoked > 0 || totalDrank > 0) {
+                document.getElementById('risky-behavior-stats').style.display = 'block';
+                document.getElementById('stat-smoke-total').textContent = totalSmoked;
+                document.getElementById('stat-drink-total').textContent = totalDrank;
+                document.getElementById('stat-smoke-recent').textContent = last30DaysSmoked > 0 ? `（最近30天: ${last30DaysSmoked}次）` : '';
+                document.getElementById('stat-drink-recent').textContent = last30DaysDrank > 0 ? `（最近30天: ${last30DaysDrank}次）` : '';
+            } else {
+                document.getElementById('risky-behavior-stats').style.display = 'none';
+            }
+
+            // 显示记录列表
+            const listHtml = sortedRecords.map((record, index) => {
+                const phaseNames = {
+                    'protection': '保护期',
+                    'recovery': '恢复期',
+                    'strengthening': '强心期',
+                    'maintenance': '维护期'
+                };
+
+                // 确定血压心率标签的样式
+                let bpHrTagClass = 'tag-info';
+                let bpHrIcon = '';
+                if (record.vitalSignsLevel === 'danger') {
+                    bpHrTagClass = 'tag-danger';
+                    bpHrIcon = '🚨';
+                } else if (record.vitalSignsLevel === 'warning') {
+                    bpHrTagClass = 'tag-warning';
+                    bpHrIcon = '⚠️';
+                }
+
+                return `
+                    <div class="record-item" onclick="toggleRecordDetail(${index})">
+                        <div class="record-date">${record.date} · ${phaseNames[record.phase] || record.phase}</div>
+                        <div class="record-summary">
+                            <span class="record-tag ${!record.smoked ? 'tag-success' : 'tag-error'}">
+                                戒烟: ${!record.smoked ? '✅' : '❌'}
+                            </span>
+                            <span class="record-tag ${!record.drank ? 'tag-success' : 'tag-error'}">
+                                戒酒: ${!record.drank ? '✅' : '❌'}
+                            </span>
+                            <span class="record-tag ${record.medsTaken ? 'tag-success' : 'tag-error'}">
+                                吃药: ${record.medsTaken ? '✅' : '❌'}
+                            </span>
+                            <span class="record-tag tag-info">
+                                运动: ${record.exerciseMinutes || 0}分钟
+                            </span>
+                            ${record.bpSys ? `<span class="record-tag ${bpHrTagClass}">${bpHrIcon} ${record.bpSys}/${record.bpDia} (HR ${record.heartRate || '--'})</span>` : ''}
+                        </div>
+                        <div class="record-detail" id="detail-${index}">
+                            ${record.exerciseTarget ? `<div class="record-detail-item">运动目标: ${record.exerciseTarget}分钟 ${record.exerciseMinutes >= record.exerciseTarget ? '✅达标' : ''}</div>` : ''}
+                            ${record.bpSys || record.bpDia || record.heartRate ? `<div class="record-detail-item">血压心率: ${record.bpSys || '--'}/${record.bpDia || '--'} mmHg, 心率: ${record.heartRate || '--'} 次/分</div>` : ''}
+                            ${record.symptoms && record.symptoms.length > 0 ? `<div class="record-detail-item">症状: ${record.symptoms.join('、')}</div>` : ''}
+                            ${record.note ? `<div class="record-detail-item">备注: ${record.note}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('records-list').innerHTML = listHtml;
+        }
+
+        // ==================== 切换记录详情 ====================
+        function toggleRecordDetail(index) {
+            const detail = document.getElementById(`detail-${index}`);
+            detail.classList.toggle('show');
+        }
+
+        // ==================== 加载设置页面 ====================
+        function loadSettingsPage() {
+            const settings = getSettings();
+            document.getElementById('surgery-date').value = settings.surgeryDate || '';
+
+            selectOption('exercise-mode', settings.exerciseMode || 'auto');
+
+            if (settings.exerciseMode === 'custom') {
+                document.getElementById('custom-exercise-input').style.display = 'block';
+                document.getElementById('custom-exercise-target').value = settings.customExerciseTarget || '';
+            } else {
+                document.getElementById('custom-exercise-input').style.display = 'none';
+            }
+        }
+
+        // ==================== 保存设置 ====================
+        function saveSettings() {
+            const surgeryDate = document.getElementById('surgery-date').value;
+
+            if (!surgeryDate) {
+                showToast('请填写手术日期');
+                return;
+            }
+
+            const settings = {
+                surgeryDate,
+                exerciseMode: todayData['exercise-mode'] || 'auto',
+                customExerciseTarget: parseInt(document.getElementById('custom-exercise-target').value) || null
+            };
+
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+            showToast('设置已保存');
+            loadTodayPage();
+        }
+
+        // ==================== 导出数据 ====================
+        function exportData() {
+            const records = getRecords();
+            const settings = getSettings();
+
+            const data = {
+                settings,
+                records,
+                exportDate: new Date().toISOString()
+            };
+
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `心脏康复记录_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+
+            showToast('数据已导出');
+        }
+
+        // ==================== 清空所有记录 ====================
+        function clearAllData() {
+            if (confirm('确定要清空所有记录吗？此操作不可恢复！')) {
+                localStorage.removeItem(STORAGE_KEYS.RECORDS);
+                showToast('所有记录已清空');
+                loadRecordsPage();
+                loadTodayPage();
+            }
+        }
+
+        // ==================== LocalStorage 操作 ====================
+        function getRecords() {
+            const data = localStorage.getItem(STORAGE_KEYS.RECORDS);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveRecords(records) {
+            localStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(records));
+        }
+
+        function getSettings() {
+            const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+            return data ? JSON.parse(data) : {};
+        }
+
+        // ==================== 显示提示 ====================
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // ==================== 检查管理 ====================
+
+        // 获取检查记录
+        function getCheckups() {
+            const data = localStorage.getItem(STORAGE_KEYS.CHECKUPS);
+            return data ? JSON.parse(data) : null;
+        }
+
+        // 保存检查记录
+        function saveCheckups(checkups) {
+            localStorage.setItem(STORAGE_KEYS.CHECKUPS, JSON.stringify(checkups));
+        }
+
+        // 初始化检查计划（根据手术日期）
+        function initializeCheckups(surgeryDate) {
+            const surgery = new Date(surgeryDate);
+
+            // 计算各个检查的推荐日期
+            const firstLipidStart = new Date(surgery);
+            firstLipidStart.setDate(firstLipidStart.getDate() + 28); // 4周
+
+            const firstLipidEnd = new Date(surgery);
+            firstLipidEnd.setDate(firstLipidEnd.getDate() + 56); // 8周
+
+            const echoStart = new Date(surgery);
+            echoStart.setDate(echoStart.getDate() + 42); // 6周
+
+            const echoEnd = new Date(surgery);
+            echoEnd.setDate(echoEnd.getDate() + 84); // 12周
+
+            const secondLipidDate = new Date(surgery);
+            secondLipidDate.setDate(secondLipidDate.getDate() + 90); // 3个月
+
+            const annualCheckDate = new Date(surgery);
+            annualCheckDate.setDate(annualCheckDate.getDate() + 365); // 12个月
+
+            return {
+                firstLipid: {
+                    name: '血脂检查（第一次）',
+                    dueStart: firstLipidStart.toISOString().split('T')[0],
+                    dueEnd: firstLipidEnd.toISOString().split('T')[0],
+                    done: false,
+                    LDL: null,
+                    completedDate: null
+                },
+                echoECG: {
+                    name: '心电图 + 心脏彩超',
+                    dueStart: echoStart.toISOString().split('T')[0],
+                    dueEnd: echoEnd.toISOString().split('T')[0],
+                    done: false,
+                    EF: null,
+                    completedDate: null
+                },
+                secondLipid: {
+                    name: '血脂检查（第二次）',
+                    dueDate: secondLipidDate.toISOString().split('T')[0],
+                    done: false,
+                    LDL: null,
+                    completedDate: null
+                },
+                annualCheck: {
+                    name: '年度综合复查',
+                    dueDate: annualCheckDate.toISOString().split('T')[0],
+                    done: false,
+                    LDL: null,
+                    EF: null,
+                    completedDate: null
+                }
+            };
+        }
+
+        // 获取下一个待完成的检查
+        function getNextCheckup(checkups) {
+            if (!checkups) return null;
+
+            const today = new Date().toISOString().split('T')[0];
+            const checkupList = [
+                { id: 'firstLipid', ...checkups.firstLipid },
+                { id: 'echoECG', ...checkups.echoECG },
+                { id: 'secondLipid', ...checkups.secondLipid },
+                { id: 'annualCheck', ...checkups.annualCheck }
+            ];
+
+            for (const checkup of checkupList) {
+                if (!checkup.done) {
+                    const dueDate = checkup.dueDate || checkup.dueStart;
+                    return { id: checkup.id, ...checkup, dueDateDisplay: dueDate };
+                }
+            }
+
+            return null;
+        }
+
+        // 计算距离检查的剩余天数
+        function getDaysUntilCheckup(dueDate) {
+            const today = new Date();
+            const due = new Date(dueDate);
+            const diffTime = due - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        // 判断LDL是否达标
+        function assessLDL(ldl) {
+            if (ldl === null || ldl === undefined) return null;
+            if (ldl < 1.4) return 'good';
+            if (ldl < 1.8) return 'warning';
+            return 'danger';
+        }
+
+        // 判断EF是否达标
+        function assessEF(ef) {
+            if (ef === null || ef === undefined) return null;
+            if (ef >= 50) return 'good';
+            if (ef >= 40) return 'warning';
+            return 'danger';
+        }
+
+        // 加载检查页面
+        function loadCheckupsPage() {
+            const settings = getSettings();
+            if (!settings.surgeryDate) {
+                document.getElementById('checkup-list').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div>请先在「设置」中填写手术日期</div></div>';
+                return;
+            }
+
+            let checkups = getCheckups();
+            if (!checkups) {
+                // 首次初始化检查计划
+                checkups = initializeCheckups(settings.surgeryDate);
+                saveCheckups(checkups);
+            }
+
+            // 显示下一个检查
+            const nextCheckup = getNextCheckup(checkups);
+            if (nextCheckup) {
+                const daysUntil = getDaysUntilCheckup(nextCheckup.dueDateDisplay);
+                const dueText = daysUntil > 0 ? `还有 ${daysUntil} 天` : daysUntil === 0 ? '今天' : `已逾期 ${Math.abs(daysUntil)} 天`;
+                document.getElementById('next-checkup-info').innerHTML = `<strong>${nextCheckup.name}</strong><br>${dueText}（${nextCheckup.dueDateDisplay}）`;
+                document.getElementById('next-checkup-card').style.display = 'block';
+            } else {
+                document.getElementById('next-checkup-card').style.display = 'none';
+            }
+
+            // 渲染检查列表
+            renderCheckupList(checkups);
+        }
+
+        // 渲染检查列表
+        function renderCheckupList(checkups) {
+            const today = new Date().toISOString().split('T')[0];
+            const checkupList = [
+                { id: 'firstLipid', ...checkups.firstLipid, timeRange: `${checkups.firstLipid.dueStart} 至 ${checkups.firstLipid.dueEnd}`, hasLDL: true },
+                { id: 'echoECG', ...checkups.echoECG, timeRange: `${checkups.echoECG.dueStart} 至 ${checkups.echoECG.dueEnd}`, hasEF: true },
+                { id: 'secondLipid', ...checkups.secondLipid, timeRange: checkups.secondLipid.dueDate, hasLDL: true },
+                { id: 'annualCheck', ...checkups.annualCheck, timeRange: checkups.annualCheck.dueDate, hasLDL: true, hasEF: true }
+            ];
+
+            const html = checkupList.map(checkup => {
+                const dueDate = checkup.dueDate || checkup.dueStart;
+                const daysUntil = getDaysUntilCheckup(dueDate);
+
+                let statusClass = 'pending';
+                let statusText = '待完成';
+                let itemClass = 'checkup-item';
+
+                if (checkup.done) {
+                    statusClass = 'done';
+                    statusText = '已完成';
+                    itemClass += ' done';
+                } else if (daysUntil < 0) {
+                    statusClass = 'overdue';
+                    statusText = `已逾期 ${Math.abs(daysUntil)} 天`;
+                    itemClass += ' overdue';
+                } else if (daysUntil <= 7) {
+                    itemClass += ' upcoming';
+                    statusText = `还有 ${daysUntil} 天`;
+                }
+
+                let resultHtml = '';
+                if (checkup.done) {
+                    if (checkup.hasLDL && checkup.LDL !== null) {
+                        const ldlStatus = assessLDL(checkup.LDL);
+                        resultHtml += `<div class="checkup-result ${ldlStatus}">`;
+                        if (ldlStatus === 'good') {
+                            resultHtml += `✅ LDL: ${checkup.LDL} mmol/L（达标）`;
+                        } else if (ldlStatus === 'warning') {
+                            resultHtml += `⚠️ LDL: ${checkup.LDL} mmol/L（偏高，需要控制）`;
+                        } else {
+                            resultHtml += `🚨 LDL: ${checkup.LDL} mmol/L（严重超标，请立即就医调整用药）`;
+                        }
+                        resultHtml += `</div>`;
+                    }
+                    if (checkup.hasEF && checkup.EF !== null) {
+                        const efStatus = assessEF(checkup.EF);
+                        resultHtml += `<div class="checkup-result ${efStatus}">`;
+                        if (efStatus === 'good') {
+                            resultHtml += `✅ EF: ${checkup.EF}%（正常）`;
+                        } else if (efStatus === 'warning') {
+                            resultHtml += `⚠️ EF: ${checkup.EF}%（偏低，需要注意）`;
+                        } else {
+                            resultHtml += `🚨 EF: ${checkup.EF}%（严重偏低，高风险，需严格管理）`;
+                        }
+                        resultHtml += `</div>`;
+                    }
+                }
+
+                let inputHtml = '';
+                if (!checkup.done) {
+                    inputHtml = '<div class="checkup-input-group">';
+                    if (checkup.hasLDL) {
+                        inputHtml += `<input type="number" id="${checkup.id}-ldl" placeholder="LDL (mmol/L)" step="0.1" min="0">`;
+                    }
+                    if (checkup.hasEF) {
+                        inputHtml += `<input type="number" id="${checkup.id}-ef" placeholder="EF (%)" step="1" min="0" max="100">`;
+                    }
+                    inputHtml += `<button onclick="markCheckupDone('${checkup.id}')">完成</button>`;
+                    inputHtml += '</div>';
+                } else {
+                    // 已完成的检查显示清除按钮
+                    inputHtml = '<div class="checkup-input-group">';
+                    inputHtml += `<button onclick="clearCheckupData('${checkup.id}')" style="background: #ff4d4f; border-color: #ff4d4f;">清除数据</button>`;
+                    inputHtml += '</div>';
+                }
+
+                return `
+                    <div class="${itemClass}">
+                        <div class="checkup-header">
+                            <div class="checkup-title">${checkup.name}</div>
+                            <div class="checkup-status ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="checkup-info">
+                            推荐时间：${checkup.timeRange}
+                            ${checkup.done && checkup.completedDate ? `<br>完成日期：${checkup.completedDate}` : ''}
+                        </div>
+                        ${inputHtml}
+                        ${resultHtml}
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('checkup-list').innerHTML = html;
+        }
+
+        // 标记检查完成
+        function markCheckupDone(checkupId) {
+            const checkups = getCheckups();
+            const checkup = checkups[checkupId];
+
+            // 读取输入值
+            const ldlInput = document.getElementById(`${checkupId}-ldl`);
+            const efInput = document.getElementById(`${checkupId}-ef`);
+
+            if (ldlInput) {
+                const ldlValue = parseFloat(ldlInput.value);
+                if (!ldlValue || ldlValue <= 0) {
+                    showToast('请输入有效的 LDL 值');
+                    return;
+                }
+                checkup.LDL = ldlValue;
+            }
+
+            if (efInput) {
+                const efValue = parseFloat(efInput.value);
+                if (!efValue || efValue <= 0) {
+                    showToast('请输入有效的 EF 值');
+                    return;
+                }
+                checkup.EF = efValue;
+            }
+
+            checkup.done = true;
+            checkup.completedDate = new Date().toISOString().split('T')[0];
+
+            saveCheckups(checkups);
+            showToast('检查记录已保存');
+            loadCheckupsPage();
+        }
+
+        // 清除检查数据
+        function clearCheckupData(checkupId) {
+            // 确认提示
+            if (!confirm('确定要清除这个检查的数据吗？清除后可以重新输入。')) {
+                return;
+            }
+
+            const checkups = getCheckups();
+            const checkup = checkups[checkupId];
+
+            // 重置检查数据
+            checkup.done = false;
+            checkup.LDL = null;
+            checkup.EF = null;
+            checkup.completedDate = null;
+
+            saveCheckups(checkups);
+            showToast('检查数据已清除');
+            loadCheckupsPage();
+
+            // 如果在今日页面，也更新今日页面（以便重新计算强化模式）
+            if (document.getElementById('page-today').classList.contains('active')) {
+                loadTodayPage();
+            }
+        }
+
+        // 在今天页面显示下一个检查
+        function showNextCheckupInToday() {
+            const settings = getSettings();
+            if (!settings.surgeryDate) return;
+
+            let checkups = getCheckups();
+            if (!checkups) {
+                checkups = initializeCheckups(settings.surgeryDate);
+                saveCheckups(checkups);
+            }
+
+            const nextCheckup = getNextCheckup(checkups);
+            if (nextCheckup) {
+                const daysUntil = getDaysUntilCheckup(nextCheckup.dueDateDisplay);
+                const dueText = daysUntil > 0 ? `还有 ${daysUntil} 天` : daysUntil === 0 ? '今天！' : `已逾期 ${Math.abs(daysUntil)} 天`;
+
+                document.getElementById('next-checkup-today-content').innerHTML = `🩺 <strong>下一个检查：</strong>${nextCheckup.name}（${dueText}）`;
+                document.getElementById('next-checkup-today').style.display = 'block';
+            } else {
+                document.getElementById('next-checkup-today').style.display = 'none';
+            }
+        }
+
+        // ==================== 显示/隐藏风险警告 ====================
+        function updateRiskWarning(task, didRiskyBehavior) {
+            const warningId = task === 'smoke' ? 'smoke-risk-warning' : 'drink-risk-warning';
+            const statsId = task === 'smoke' ? 'smoke-stats' : 'drink-stats';
+            const warningElement = document.getElementById(warningId);
+            const statsElement = document.getElementById(statsId);
+
+            if (didRiskyBehavior) {
+                // 显示警告
+                warningElement.classList.add('show');
+
+                // 统计历史记录
+                const records = getRecords();
+                const settings = getSettings();
+
+                if (settings.surgeryDate) {
+                    const totalCount = records.filter(r => r[task + 'd'] === true).length;
+                    const last30Days = records.filter(r => {
+                        const recordDate = new Date(r.date);
+                        const today = new Date();
+                        const daysDiff = Math.floor((today - recordDate) / (1000 * 60 * 60 * 24));
+                        return daysDiff <= 30 && r[task + 'd'] === true;
+                    }).length;
+
+                    const behaviorName = task === 'smoke' ? '吸烟' : '饮酒';
+
+                    if (totalCount > 0 || last30Days > 0) {
+                        statsElement.innerHTML = `⚠️ 您在术后已经${behaviorName} <strong>${totalCount}</strong> 次${last30Days > 0 ? `（最近30天: <strong>${last30Days}</strong> 次）` : ''}。<br>每次${behaviorName}都在增加生命危险！请立即停止！`;
+                    } else {
+                        statsElement.innerHTML = `⚠️ 这是您术后第一次记录${behaviorName}，请立即停止，不要让它成为习惯！`;
+                    }
+                }
+            } else {
+                // 隐藏警告
+                warningElement.classList.remove('show');
+            }
+        }
+
+        // ==================== 任务选项点击事件 ====================
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('task-option')) {
+                const task = e.target.dataset.task;
+                const value = e.target.dataset.value;
+
+                // 清除同组其他选项的选中状态
+                document.querySelectorAll(`[data-task="${task}"]`).forEach(opt => {
+                    opt.classList.remove('selected-yes', 'selected-no');
+                });
+
+                // 设置当前选项的选中状态
+                if (task === 'smoke' || task === 'drink') {
+                    e.target.classList.add(value === 'false' ? 'selected-yes' : 'selected-no');
+                    todayData[task] = value === 'true';
+
+                    // 显示/隐藏风险警告
+                    updateRiskWarning(task, value === 'true');
+                } else if (task === 'meds') {
+                    e.target.classList.add(value === 'true' ? 'selected-yes' : 'selected-no');
+                    todayData[task] = value === 'true';
+                } else if (task === 'exercise-mode') {
+                    e.target.classList.add('selected-yes');
+                    todayData[task] = value;
+
+                    if (value === 'custom') {
+                        document.getElementById('custom-exercise-input').style.display = 'block';
+                    } else {
+                        document.getElementById('custom-exercise-input').style.display = 'none';
+                    }
+                }
+            }
+        });
+
+        // ==================== 页面加载时初始化 ====================
+        window.addEventListener('load', function() {
+            loadTodayPage();
+        });
+    </script>
+</body>
+</html>
