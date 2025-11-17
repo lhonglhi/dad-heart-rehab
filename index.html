@@ -953,6 +953,17 @@
             <div id="next-checkup-today-content"></div>
         </div>
 
+        <!-- 今日蛋白质推荐 -->
+        <div class="card" id="protein-recommendation-card" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); border: none;">
+            <div class="card-title" style="color: white; display: flex; justify-content: space-between; align-items: center;">
+                <span>🍽️ 今日蛋白推荐</span>
+                <button onclick="changeProteinRecommendation()" style="background: white; color: #ff6b6b; border: none; padding: 6px 12px; border-radius: 4px; font-size: 13px; cursor: pointer;">换一换</button>
+            </div>
+            <div id="protein-recommendation-content" style="background: white; border-radius: 6px; padding: 15px; margin-top: 10px;">
+                <!-- 推荐内容将通过JavaScript填充 -->
+            </div>
+        </div>
+
         <!-- 戒烟卡片 -->
         <div class="card">
             <div class="card-title">今天有抽烟吗？</div>
@@ -1238,8 +1249,53 @@
             CHECKUPS: 'heartRehabCheckups'
         };
 
+        // 蛋白质食物推荐数据
+        const PROTEIN_RECOMMENDATIONS = {
+            protection: [
+                { name: "清蒸鲈鱼", amount: "50–80g", meal: "午餐 / 晚餐", note: "极少盐，不放油，易消化" },
+                { name: "鲫鱼豆腐汤", amount: "鱼肉 50g + 豆腐", meal: "午餐 / 晚餐", note: "术后首选，高蛋白、低脂肪" },
+                { name: "草鱼鱼片汤", amount: "60g", meal: "午餐 / 晚餐", note: "不煎不炸，鱼片切薄更易吸收" },
+                { name: "蒸蛋羹", amount: "1 小碗（约 ½–1 个蛋）", meal: "早餐 / 晚餐", note: "极易消化" },
+                { name: "蛋花汤", amount: "1 碗", meal: "早餐 / 晚餐", note: "轻度蛋白补充" },
+                { name: "嫩豆腐", amount: "75g", meal: "午餐 / 晚餐", note: "植物蛋白，适合术后" },
+                { name: "鸡胸肉丝粥", amount: "鸡肉 30–40g", meal: "早餐 / 午餐", note: "极少油，易吸收" }
+            ],
+            recovery: [
+                { name: "蒸武昌鱼", amount: "100g", meal: "午餐 / 晚餐", note: "湖北地区易买，低脂" },
+                { name: "番茄炖草鱼片", amount: "80g", meal: "午餐 / 晚餐", note: "富含番茄红素，抗炎" },
+                { name: "清蒸鲈鱼", amount: "100g", meal: "午餐 / 晚餐", note: "" },
+                { name: "黑鱼片汤", amount: "80g", meal: "午餐 / 晚餐", note: "黑鱼肉质细嫩，利于恢复" },
+                { name: "水煮蛋", amount: "1 个", meal: "早餐", note: "" },
+                { name: "鸡蛋羹", amount: "1 碗", meal: "早餐 / 晚餐", note: "对心脏负担小" },
+                { name: "虾仁蛋花汤", amount: "蛋 ½ + 虾仁 30g", meal: "午餐 / 晚餐", note: "易消化、低脂" },
+                { name: "豆腐", amount: "100g", meal: "午餐 / 晚餐", note: "" },
+                { name: "去皮鸡腿肉", amount: "60g", meal: "午餐 / 晚餐", note: "低脂，适合心脏康复" }
+            ],
+            strengthening: [
+                { name: "清蒸武昌鱼", amount: "120g", meal: "午餐 / 晚餐", note: "" },
+                { name: "清蒸鲈鱼", amount: "120g", meal: "午餐 / 晚餐", note: "" },
+                { name: "番茄炖鱼片", amount: "100g", meal: "午餐 / 晚餐", note: "增强抗炎能力" },
+                { name: "黄骨鱼炖冬瓜", amount: "100g", meal: "午餐 / 晚餐", note: "清淡、低脂" },
+                { name: "黑鱼片炒蛋（少油）", amount: "鱼 80g + 蛋 1 个", meal: "午餐 / 晚餐", note: "" },
+                { name: "鸡蛋羹", amount: "1 碗", meal: "早餐 / 晚餐", note: "" },
+                { name: "豆腐", amount: "150g", meal: "午餐 / 晚餐", note: "" },
+                { name: "去皮鸡腿肉", amount: "80g", meal: "午餐 / 晚餐", note: "" },
+                { name: "瘦牛肉（清炖）", amount: "40–60g", meal: "午餐", note: "每周限制 1–2 次" }
+            ],
+            maintenance: [
+                { name: "清蒸鱼（武昌鱼 / 草鱼 / 鲈鱼）", amount: "100–150g", meal: "午餐 / 晚餐", note: "长期心血管友好" },
+                { name: "鱼片炒蛋（少油）", amount: "鱼 80g + 蛋 1 个", meal: "午餐 / 晚餐", note: "" },
+                { name: "红烧鱼（低油版）", amount: "100g", meal: "午餐 / 晚餐", note: "少油少盐" },
+                { name: "鸡蛋", amount: "1 个", meal: "早餐", note: "" },
+                { name: "豆腐", amount: "150g", meal: "午餐 / 晚餐", note: "" },
+                { name: "去皮鸡胸肉", amount: "80g", meal: "午餐 / 晚餐", note: "" },
+                { name: "瘦猪肉（清炖/蒸）", amount: "40–50g", meal: "午餐", note: "每周 1–2 次" }
+            ]
+        };
+
         let currentPage = 'today';
         let todayData = {};
+        let currentProteinRecommendation = null;
 
         // ==================== 页面切换 ====================
         function switchPage(page) {
@@ -1376,6 +1432,69 @@
             return { current: currentStreak, max: maxStreak };
         }
 
+        // ==================== 蛋白质推荐功能 ====================
+        function getRandomProteinRecommendation(phase) {
+            if (!phase || !PROTEIN_RECOMMENDATIONS[phase]) {
+                return null;
+            }
+
+            const recommendations = PROTEIN_RECOMMENDATIONS[phase];
+            const randomIndex = Math.floor(Math.random() * recommendations.length);
+            return recommendations[randomIndex];
+        }
+
+        function displayProteinRecommendation(phaseInfo) {
+            if (!phaseInfo) return;
+
+            const recommendation = getRandomProteinRecommendation(phaseInfo.phase);
+            if (!recommendation) return;
+
+            currentProteinRecommendation = recommendation;
+
+            const contentDiv = document.getElementById('protein-recommendation-content');
+            if (!contentDiv) return;
+
+            let html = `
+                <div style="margin-bottom: 10px;">
+                    <div style="font-size: 18px; font-weight: bold; color: #ff6b6b; margin-bottom: 8px;">
+                        ${recommendation.name}
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <div style="background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 4px; font-size: 13px;">
+                            📏 ${recommendation.amount}
+                        </div>
+                        <div style="background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 4px; font-size: 13px;">
+                            🍴 ${recommendation.meal}
+                        </div>
+                    </div>
+            `;
+
+            if (recommendation.note) {
+                html += `
+                    <div style="font-size: 13px; color: #666; line-height: 1.6; padding: 8px; background: #f5f5f5; border-radius: 4px; border-left: 3px solid #ff6b6b;">
+                        💡 ${recommendation.note}
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+
+            contentDiv.innerHTML = html;
+        }
+
+        function changeProteinRecommendation() {
+            const settings = getSettings();
+            const phaseInfo = calculatePhase(settings.surgeryDate);
+
+            if (!phaseInfo) {
+                showToast('请先在设置中填写手术日期');
+                return;
+            }
+
+            displayProteinRecommendation(phaseInfo);
+            showToast('已为您换一道推荐 😊');
+        }
+
         // ==================== 加载今天页面 ====================
         function loadTodayPage() {
             const settings = getSettings();
@@ -1437,6 +1556,9 @@
 
             // 显示下一个检查提示
             showNextCheckupInToday();
+
+            // 显示蛋白质推荐
+            displayProteinRecommendation(phaseInfo);
         }
 
         // ==================== 更新康复阶段路线图 ====================
