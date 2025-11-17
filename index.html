@@ -1249,53 +1249,29 @@
             CHECKUPS: 'heartRehabCheckups'
         };
 
-        // 蛋白质食物推荐数据
-        const PROTEIN_RECOMMENDATIONS = {
-            protection: [
-                { name: "清蒸鲈鱼", amount: "50–80g", meal: "午餐 / 晚餐", note: "极少盐，不放油，易消化" },
-                { name: "鲫鱼豆腐汤", amount: "鱼肉 50g + 豆腐", meal: "午餐 / 晚餐", note: "术后首选，高蛋白、低脂肪" },
-                { name: "草鱼鱼片汤", amount: "60g", meal: "午餐 / 晚餐", note: "不煎不炸，鱼片切薄更易吸收" },
-                { name: "蒸蛋羹", amount: "1 小碗（约 ½–1 个蛋）", meal: "早餐 / 晚餐", note: "极易消化" },
-                { name: "蛋花汤", amount: "1 碗", meal: "早餐 / 晚餐", note: "轻度蛋白补充" },
-                { name: "嫩豆腐", amount: "75g", meal: "午餐 / 晚餐", note: "植物蛋白，适合术后" },
-                { name: "鸡胸肉丝粥", amount: "鸡肉 30–40g", meal: "早餐 / 午餐", note: "极少油，易吸收" }
-            ],
-            recovery: [
-                { name: "蒸武昌鱼", amount: "100g", meal: "午餐 / 晚餐", note: "湖北地区易买，低脂" },
-                { name: "番茄炖草鱼片", amount: "80g", meal: "午餐 / 晚餐", note: "富含番茄红素，抗炎" },
-                { name: "清蒸鲈鱼", amount: "100g", meal: "午餐 / 晚餐", note: "" },
-                { name: "黑鱼片汤", amount: "80g", meal: "午餐 / 晚餐", note: "黑鱼肉质细嫩，利于恢复" },
-                { name: "水煮蛋", amount: "1 个", meal: "早餐", note: "" },
-                { name: "鸡蛋羹", amount: "1 碗", meal: "早餐 / 晚餐", note: "对心脏负担小" },
-                { name: "虾仁蛋花汤", amount: "蛋 ½ + 虾仁 30g", meal: "午餐 / 晚餐", note: "易消化、低脂" },
-                { name: "豆腐", amount: "100g", meal: "午餐 / 晚餐", note: "" },
-                { name: "去皮鸡腿肉", amount: "60g", meal: "午餐 / 晚餐", note: "低脂，适合心脏康复" }
-            ],
-            strengthening: [
-                { name: "清蒸武昌鱼", amount: "120g", meal: "午餐 / 晚餐", note: "" },
-                { name: "清蒸鲈鱼", amount: "120g", meal: "午餐 / 晚餐", note: "" },
-                { name: "番茄炖鱼片", amount: "100g", meal: "午餐 / 晚餐", note: "增强抗炎能力" },
-                { name: "黄骨鱼炖冬瓜", amount: "100g", meal: "午餐 / 晚餐", note: "清淡、低脂" },
-                { name: "黑鱼片炒蛋（少油）", amount: "鱼 80g + 蛋 1 个", meal: "午餐 / 晚餐", note: "" },
-                { name: "鸡蛋羹", amount: "1 碗", meal: "早餐 / 晚餐", note: "" },
-                { name: "豆腐", amount: "150g", meal: "午餐 / 晚餐", note: "" },
-                { name: "去皮鸡腿肉", amount: "80g", meal: "午餐 / 晚餐", note: "" },
-                { name: "瘦牛肉（清炖）", amount: "40–60g", meal: "午餐", note: "每周限制 1–2 次" }
-            ],
-            maintenance: [
-                { name: "清蒸鱼（武昌鱼 / 草鱼 / 鲈鱼）", amount: "100–150g", meal: "午餐 / 晚餐", note: "长期心血管友好" },
-                { name: "鱼片炒蛋（少油）", amount: "鱼 80g + 蛋 1 个", meal: "午餐 / 晚餐", note: "" },
-                { name: "红烧鱼（低油版）", amount: "100g", meal: "午餐 / 晚餐", note: "少油少盐" },
-                { name: "鸡蛋", amount: "1 个", meal: "早餐", note: "" },
-                { name: "豆腐", amount: "150g", meal: "午餐 / 晚餐", note: "" },
-                { name: "去皮鸡胸肉", amount: "80g", meal: "午餐 / 晚餐", note: "" },
-                { name: "瘦猪肉（清炖/蒸）", amount: "40–50g", meal: "午餐", note: "每周 1–2 次" }
-            ]
-        };
+        // 全局配置数据（从data.json加载）
+        let CONFIG_DATA = null;
 
         let currentPage = 'today';
         let todayData = {};
         let currentProteinRecommendation = null;
+
+        // ==================== 加载配置数据 ====================
+        async function loadConfigData() {
+            try {
+                const response = await fetch('data.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load config data');
+                }
+                CONFIG_DATA = await response.json();
+                console.log('配置数据加载成功');
+                return CONFIG_DATA;
+            } catch (error) {
+                console.error('加载配置数据失败:', error);
+                showToast('配置数据加载失败，请刷新页面重试');
+                return null;
+            }
+        }
 
         // ==================== 页面切换 ====================
         function switchPage(page) {
@@ -1434,11 +1410,11 @@
 
         // ==================== 蛋白质推荐功能 ====================
         function getRandomProteinRecommendation(phase) {
-            if (!phase || !PROTEIN_RECOMMENDATIONS[phase]) {
+            if (!CONFIG_DATA || !phase || !CONFIG_DATA.proteinRecommendations[phase]) {
                 return null;
             }
 
-            const recommendations = PROTEIN_RECOMMENDATIONS[phase];
+            const recommendations = CONFIG_DATA.proteinRecommendations[phase];
             const randomIndex = Math.floor(Math.random() * recommendations.length);
             return recommendations[randomIndex];
         }
@@ -2505,7 +2481,11 @@
         });
 
         // ==================== 页面加载时初始化 ====================
-        window.addEventListener('load', function() {
+        window.addEventListener('load', async function() {
+            // 先加载配置数据
+            await loadConfigData();
+
+            // 然后加载页面
             loadTodayPage();
         });
     </script>
